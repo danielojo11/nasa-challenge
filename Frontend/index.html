@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Explore the Solar System and take on an interactive junior astronaut mission to Mars in ARES-1." />
+  <title>ARES-1 | Junior Astronaut Mission Trainer</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g'><stop offset='0%25' stop-color='%23fff8e0'/><stop offset='40%25' stop-color='%23ffcc33'/><stop offset='100%25' stop-color='%23ff8800'/></radialGradient></defs><circle cx='50' cy='50' r='38' fill='url(%23g)'/><circle cx='50' cy='50' r='48' fill='none' stroke='%23ffcc3344' stroke-width='2'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap"
+    rel="stylesheet" />
+</head>
+
+<body>
+  <canvas id="scene"></canvas>
+
+  <div id="overlay">
+    <!-- Sci-Fi Dynamic Planet Focus Card (Matches User Reference Screenshots) -->
+    <div id="planet-focus-card" class="planet-focus-card hidden">
+      <button id="pcard-collapse-tab" class="pcard-tab" title="Toggle Card">◀</button>
+      <div class="pcard-inner">
+        <!-- Header -->
+        <div class="pcard-header">
+          <button id="pcard-back-btn" class="pcard-back-btn" style="display: none;" title="Back to Planet Menu">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <div class="pcard-title-group">
+            <h2 id="pcard-title" class="pcard-title">EARTH</h2>
+            <span id="pcard-subtitle" class="pcard-subtitle">PLANET</span>
+          </div>
+        </div>
+
+        <!-- Mode 1: Main Menu (Images 1 & 4) -->
+        <div id="pcard-menu-view" class="pcard-body">
+          <div class="pcard-action-list">
+            <button id="pcard-btn-visit" class="pcard-action-btn">
+              <span>PLANET SYSTEM</span>
+              <span class="pcard-arrow">▶</span>
+            </button>
+            <button id="pcard-btn-encyclopedia" class="pcard-action-btn">
+              <span>ENCYCLOPEDIA</span>
+              <span class="pcard-arrow">▶</span>
+            </button>
+            <button id="pcard-btn-structure" class="pcard-action-btn">
+              <span>STRUCTURE</span>
+              <span class="pcard-arrow">▶</span>
+            </button>
+            <button id="pcard-btn-mars-land" class="pcard-action-btn mars-btn" style="display: none;">
+              <span>🔴 LAND ON MARS</span>
+              <span class="pcard-arrow">➔</span>
+            </button>
+          </div>
+
+          <!-- Bottom Diamond Action Buttons -->
+          <div class="pcard-diamonds-row">
+            <button id="pcard-btn-switch" class="pcard-diamond-btn" title="Cycle to Next Planet">
+              <div class="diamond-shape">
+                <span class="diamond-icon">&lt;&gt;</span>
+              </div>
+              <span class="diamond-label">SWITCH<br>PLANET</span>
+            </button>
+            <button id="pcard-btn-nightsky" class="pcard-diamond-btn" title="Look out into Night Sky">
+              <div class="diamond-shape">
+                <svg class="diamond-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m10 10-6.5 6.5a2.12 2.12 0 1 0 3 3L13 13"></path>
+                  <path d="m14 6 6-6"></path>
+                  <path d="M18 10l4-4"></path>
+                  <circle cx="10" cy="14" r="2"></circle>
+                </svg>
+              </div>
+              <span class="diamond-label">NIGHT<br>SKY</span>
+            </button>
+            <button id="pcard-btn-solarsystem" class="pcard-diamond-btn" title="Back to Solar System Overview">
+              <div class="diamond-shape">
+                <svg class="diamond-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+                  <ellipse cx="12" cy="12" rx="9" ry="5.5" stroke-dasharray="2 2"></ellipse>
+                  <circle cx="18" cy="9" r="1.5" fill="currentColor"></circle>
+                </svg>
+              </div>
+              <span class="diamond-label">SOLAR<br>SYSTEM</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode 2: Structure View (Images 2 & 3) -->
+        <div id="pcard-structure-view" class="pcard-body" style="display: none;">
+          <div class="pcard-scroll-container" id="pcard-structure-content">
+            <!-- Dynamic structured layer breakdown -->
+          </div>
+          <div class="pcard-scroll-track">
+            <span class="scroll-arrow top">▲</span>
+            <div class="scroll-thumb" id="pcard-scroll-thumb"></div>
+            <span class="scroll-arrow btm">▼</span>
+          </div>
+        </div>
+
+        <!-- Mode 3: Encyclopedia View -->
+        <div id="pcard-encyclopedia-view" class="pcard-body" style="display: none;">
+          <div class="pcard-scroll-container" id="pcard-encyclopedia-content">
+            <!-- Dynamic astronomy facts -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Structure Callouts Overlay (Right side of Planet Cutaway, Images 2 & 3) -->
+    <div id="structure-callouts-overlay" class="structure-callouts-overlay" style="display: none;">
+      <!-- Callouts rendered dynamically -->
+    </div>
+
+    <!-- Sci-Fi HUD Overhaul matching User Reference -->
+    <!-- Top Right Controls (Sound & Constellation View; NO Upgrade Button) -->
+    <div id="scifi-top-right">
+      <button id="scifi-sound-btn" class="scifi-round-btn" title="Toggle Audio Sound">
+        <svg class="scifi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+      </button>
+      <button id="scifi-view-btn" class="scifi-round-btn active" title="Toggle Constellations & Labels">
+        <svg class="scifi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Sci-Fi Left Dock (Orrery, Telemetry, Search) -->
+    <aside id="scifi-left-dock" aria-label="System Navigation Dock">
+      <div class="scifi-bracket-top"></div>
+      <div class="scifi-dock-inner">
+        <button id="scifi-btn-orrery" class="scifi-dock-btn active" title="Solar System Orrery / Full View">
+          <svg class="scifi-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+            <ellipse cx="12" cy="12" rx="9" ry="5.5" stroke-dasharray="2 2"></ellipse>
+            <circle cx="18" cy="9" r="1.5" fill="currentColor"></circle>
+            <ellipse cx="12" cy="12" rx="6" ry="3.5"></ellipse>
+          </svg>
+          <span class="scifi-dock-tooltip">ORRERY</span>
+        </button>
+        <button id="scifi-btn-trainer" class="scifi-dock-btn" title="ARES-1 Flight Console & Mission Simulator">
+          <svg class="scifi-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
+            <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
+            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
+            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
+          </svg>
+          <span class="scifi-dock-tooltip">ARES-1 CONSOLE</span>
+        </button>
+        <button id="scifi-btn-settings" class="scifi-dock-btn" title="NASA Telemetry & Mission Systems">
+          <svg class="scifi-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span class="scifi-dock-tooltip">TELEMETRY</span>
+        </button>
+        <button id="scifi-btn-search" class="scifi-dock-btn" title="Celestial Directory & Deep Space Search">
+          <svg class="scifi-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span class="scifi-dock-tooltip">SEARCH</span>
+        </button>
+      </div>
+      <div class="scifi-bracket-bottom"></div>
+    </aside>
+
+    <!-- Sci-Fi Right Distance Gauge -->
+    <aside id="scifi-right-ruler" aria-label="Distance AU Gauge">
+      <div class="scifi-bracket-top"></div>
+      <div class="scifi-ruler-inner">
+        <div class="scifi-ruler-notch-top"></div>
+        <div class="scifi-ruler-track">
+          <div class="scifi-ruler-tick"></div>
+          <div class="scifi-ruler-tick"></div>
+          <div class="scifi-ruler-tick"></div>
+          <div class="scifi-ruler-tick"></div>
+          <div class="scifi-ruler-tick long"></div>
+          <div class="scifi-ruler-tick"></div>
+          <div class="scifi-ruler-tick"></div>
+          <div class="scifi-ruler-tick"></div>
+          <div class="scifi-ruler-tick long"></div>
+          <div class="scifi-ruler-tick"></div>
+          <div class="scifi-ruler-indicator" id="scifi-ruler-pointer"></div>
+        </div>
+        <div class="scifi-ruler-text" id="scifi-distance-text">DISTANCE 4.20 AU</div>
+      </div>
+      <div class="scifi-bracket-bottom"></div>
+    </aside>
+
+    <!-- Sci-Fi Bottom Date/Time & Ephemeris Bar -->
+    <div id="scifi-bottom-bar">
+      <button id="scifi-play-btn" class="scifi-play-toggle" title="Play / Pause Real-Time Ephemeris">
+        <svg class="play-icon" id="scifi-play-icon" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="6 4 19 12 6 20 6 4"></polygon>
+        </svg>
+      </button>
+      <div class="scifi-date-display" id="scifi-date-text">2026 15 NOV 07:36 AM</div>
+    </div>
+
+    <!-- Hidden compatibility controls for existing trainer hooks -->
+    <div id="app-header-controls" style="display: none;">
+      <button id="cosmic-explore-btn" class="cosmic-btn">🔭 Celestial Directory</button>
+      <button id="orbit-toggle-btn" class="mode-btn">🌐 Orbit Paths: ON</button>
+      <button id="mode-toggle-btn" class="mode-btn">🚀 Launch Junior Astronaut Trainer</button>
+      <button id="sound-toggle-btn" class="sound-btn">🔊 Sound ON</button>
+    </div>
+
+    <!-- Junior Astronaut Mission Container -->
+    <div id="mission-game-container" style="display: none;"></div>
+
+    <!-- Planetary Core Structure Inspector -->
+    <div id="structure-inspector-card" class="structure-inspector" style="display: none;"></div>
+  </div>
+
+  <div id="loading-screen">
+    <div class="loading-content">
+      <h1>Solar System</h1>
+      <div class="loading-bar">
+        <div class="loading-fill" id="loading-fill"></div>
+      </div>
+      <p class="loading-text">Loading universe...</p>
+    </div>
+  </div>
+
+  <!-- Space Science Quiz Modal -->
+  <div id="quiz-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div class="modal-badge">⚡ NASA STEM ANOMALY // +35% BATTERY RECHARGE</div>
+        <button id="close-quiz-btn" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; padding: 2px 6px;">✕</button>
+      </div>
+      <h3 id="quiz-question" class="modal-question"></h3>
+      <div id="quiz-error-msg" style="display:none; color: #f87171; font-size: 12px; margin-bottom: 10px; background: rgba(239, 68, 68, 0.15); padding: 8px 12px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.4);"></div>
+      <div id="quiz-options" class="modal-options"></div>
+    </div>
+  </div>
+
+  <!-- Real NASA Telemetry & Scientific Grounding Dossier Modal -->
+  <div id="nasa-telemetry-modal" class="modal-backdrop" style="display: none;"></div>
+
+  <!-- Cosmic Discovery Radar: Stars, Comets, Debris & Mysteries Modal -->
+  <div id="cosmic-explorer-modal" class="modal-backdrop" style="display: none;"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

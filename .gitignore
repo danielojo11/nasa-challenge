@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+Frontend/node_modules/
+Backend/node_modules/
+
+# Production Build
+Frontend/dist/
+dist/
+
+# Environment Variables & Secrets
+.env
+Backend/.env
+Frontend/.env
+*.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# System
+.DS_Store
+Thumbs.db
