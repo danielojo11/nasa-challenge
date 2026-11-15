@@ -77,6 +77,21 @@ Every turn ("Sol") is driven by real NASA open datasets, with verified citation 
 
 ---
 
+## 4. Official NASA & Partner Challenge Resources (from `all.md`)
+
+ARES-1 integrates and credits all 6 official resources specified in the **2026 NASA Space Apps Challenge** document (`all.md`):
+
+| Resource | Agency / Provider | Role in Simulation & Gameplay Mechanics | Link / Endpoint |
+|---|---|---|---|
+| **NASA DONKI (Space Weather Database)** | NASA GSFC / CCMC | Models real solar flares (X5.8 and X8.7) and coronal mass ejections (1,850 km/s) that trigger critical radiation shielding emergencies on Sols 2 & 4. | [DONKI Portal](https://kauai.ccmc.gsfc.nasa.gov/DONKI/) |
+| **RadLab Dosimetry Database** | NASA OSDR / ISS / Curiosity | Authenticates astronaut surface radiation exposure in absorbed dose ($\mu\text{Gy/day}$) and drives our hydrogen water-shield deflection physics. | [RadLab on OSDR](https://osdr.nasa.gov/) |
+| **NASA OSDR (Open Science Data Repository)** | NASA Ames Research Center | Ground-truth research on spaceflight health: microgravity bone density loss, muscle atrophy, and plant tissue stress under ionizing radiation (OSDR-379). | [OSDR Science Repo](https://osdr.nasa.gov/bio/repo/) |
+| **Perseverance MOXIE & Mars Trek** | NASA JPL / MIT | Powers our Life-Support (ECLSS) oxygen synthesis equations ($10.4\text{ g/hr}$) and Jezero Crater elevation/atmospheric pressure ($750\text{ Pa}$). | [MOXIE Instrument](https://mars.nasa.gov/mars2020/spacecraft/instruments/moxie/) |
+| **CSA Food Production in Space** | Canadian Space Agency (CSA-ASC) | Powers our 4th Outpost Resource: Bioregenerative closed-loop hydroponic microgreen growth and crew caloric budgeting ($3,000\text{ kcal/crew/day}$). | [CSA Food Toolkit](https://www.asc-csa.gc.ca/eng/youth-educators/food-production-moon-remote-areas.asp) |
+| **NASA Open APIs & DSN Lag** | NASA Open Gov / JPL | Programmatic API queries (APOD, Mars Rover Photos) and speed-of-light communication lag ($14.6\text{ min}$) between Earth and Mars. | [api.nasa.gov](https://api.nasa.gov/) |
+
+---
+
 ## 5. Global Dialect & Judge Verification System
 
 To ensure global inclusivity while allowing judges to verify scientific accuracy in seconds, every crisis card uses a **Dual-Layer Display**:
@@ -97,13 +112,15 @@ To ensure global inclusivity while allowing judges to verify scientific accuracy
 
 The game runs deterministically in client-side state without unpredictable AI hallucinations:
 
-### 3 Core Resource Gauges (0–100%)
-* **⚡ Battery Power:** Depleted by running shields and heaters (-20% per action). Recharged by +35% through the Space Quiz.
-* **🫧 Air & Warmth:** Boosted by MOXIE (+30%), depleted during radiation emergencies (-20% if unshielded, -8% baseline).
-* **🛡️ Radiation Shield:** Boosted by pumping water walls (+30%), reduced by solar flares (-25% if unshielded, -8% baseline).
+### 4 Core Outpost Resources (0–100%) & Communications Delay
+* **⚡ Battery Power (Kilopower & Solar Array):** Depleted by running shields, heaters, and hydroponics (-18% to -20% per action). Recharged by +35% through the Space Science Trivia Quiz.
+* **💨 ECLSS Oxygen (MOXIE Extraction):** Synthesized from ambient $CO_2$ (+30%), depleted during environmental emergencies (-20% if unshielded, -8% baseline).
+* **🛡️ Radiation Shield (Water-Wall Protons Deflection):** Boosted by pumping water into habitat walls (+30%), reduced by solar flares and CMEs (-25% to -55% unshielded).
+* **🥗 CSA Food Reserves (Bioregenerative Hydroponics):** Sourced from the Canadian Space Agency space agriculture toolkit. Boosted by harvesting microgreens (+30%), depleted over Sols (-15% to -20%).
+* **📡 DSN Communication Lag (14.6 min):** Speed-of-light one-way radio latency ($c = 299,792\text{ km/s}$) across the Earth-Mars orbital distance, teaching students that critical decisions must be made autonomously on-site!
 
 ### Victory & Failure Conditions
-* **Victory:** Successfully surviving through Sol 5 with all 3 stats $> 0\%$. Unlocks the **Junior Astronaut Wings Certificate** with celebratory confetti.
+* **Victory:** Successfully surviving through Sol 5 with all 4 stats $> 0\%$. Unlocks the **Junior Astronaut Wings Certificate** with celebratory confetti.
 * **Failure:** Any stat dropping to $0\%$. Triggers an educational debrief explaining the physical cause and provides an instant "Retry Mission" button.
 
 ---
@@ -122,12 +139,13 @@ flowchart LR
 - [x] Clone 3D Solar System with high-res NASA 2K textures.
 - [x] Translate base celestial data from Vietnamese to English.
 - [x] Verify production Vite build works cleanly.
-- [ ] Install `canvas-confetti` for celebratory effects.
-- [ ] Implement `src/game/GameManager.js` containing the 5-Sol NASA mission loop, deterministic math, and dialect bank.
-- [ ] Implement `src/game/SoundEffects.js` with Web Audio API procedural sound generators.
-- [ ] Add the interactive Mission HUD to `index.html` and `src/style.css`.
-- [ ] Connect planet fly-to camera controls when switching between Earth Home Base and Mars Base Alpha.
-- [ ] Test in browser on `http://localhost:5173`.
+- [x] Install `canvas-confetti` for celebratory effects.
+- [x] Implement `src/game/GameManager.js` containing the 5-Sol NASA mission loop, deterministic math, and dialect bank.
+- [x] Implement `src/game/SoundEffects.js` with Web Audio API procedural sound generators.
+- [x] Add the interactive Mission HUD to `index.html` and `src/style.css`.
+- [x] Connect planet fly-to camera controls when switching between Earth Home Base and Mars Base Alpha.
+- [x] Integrate all official challenge resources from `all.md` (DONKI, RadLab, OSDR, MOXIE, Mars Trek, CSA Food Production, DSN Lag).
+- [x] Test in browser on `http://localhost:5174`.
 
 ---
 
