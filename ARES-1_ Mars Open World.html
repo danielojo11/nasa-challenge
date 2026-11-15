@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ARES-1: Mars Open World</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--pn:rgba(255,248,240,.9);--tx:#2a1838;--air:#0e9f8e;--pow:#e6a100;--food:#4a9d2f;--hp:#d63a66;--bg:#1a0f14;--btn:#2a1838;--bt:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pn:rgba(30,18,44,.88);--tx:#fbeee4;--air:#3fe0cb;--pow:#ffc83d;--food:#8fe05f;--hp:#ff6b94;--btn:#ffc83d;--bt:#2a1838}}
+:root[data-theme="dark"]{--pn:rgba(30,18,44,.88);--tx:#fbeee4;--air:#3fe0cb;--pow:#ffc83d;--food:#8fe05f;--hp:#ff6b94;--btn:#ffc83d;--bt:#2a1838}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);overflow:hidden;font:15px/1.35 Fredoka,system-ui,sans-serif;color:var(--tx);touch-action:none}
+#g{position:fixed;inset:0}#g canvas{display:block;width:100%;height:100%}
+.pn{position:fixed;background:var(--pn);border-radius:14px;padding:8px 10px;pointer-events:none;max-width:46vw}
+#hud{left:8px;top:calc(env(safe-area-inset-top,0px) + 8px);width:210px}#obj{right:8px;top:calc(env(safe-area-inset-top,0px) + 8px);font-size:13px}
+.b{display:flex;align-items:center;gap:6px;margin:2px 0}.b span{width:92px;font-size:13px}.b i{flex:1;height:10px;border-radius:6px;background:rgba(128,128,128,.3);overflow:hidden}.b u{display:block;height:100%;width:50%;transition:width .2s}
+#toast{left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 8px);max-width:min(440px,60vw);text-align:center;opacity:0;transition:opacity .3s}
+#bar{left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 8px);display:flex;gap:6px;pointer-events:auto;max-width:96vw}
+#bar button{font:inherit;font-size:12px;border:0;border-radius:12px;padding:6px 8px;background:var(--btn);color:var(--bt);cursor:pointer;line-height:1.2}
+#storm{position:fixed;inset:0;background:#ff2a00;opacity:0;pointer-events:none;transition:opacity .5s;mix-blend-mode:multiply}
+#ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(20,10,30,.82);padding:14px;z-index:5;color:#fbeee4}
+#ov>div{max-width:560px;max-height:100%;overflow:auto;background:#2b1a40;border-radius:20px;padding:18px}
+#ov h1{margin:0 0 6px;font-size:1.5rem}#ov p,#ov li{font-size:14px;margin:.3em 0}#ov .go{font:inherit;font-weight:600;font-size:1.1rem;width:100%;padding:12px;border:0;border-radius:14px;background:#ffc83d;color:#2a1838;cursor:pointer;margin-top:8px}
+#tc{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);display:none;gap:8px}#tc button{width:58px;height:58px;border-radius:50%;border:0;font-size:22px;background:var(--btn);color:var(--bt);opacity:.85}
+@media (pointer:coarse){#tc{display:flex}.hint{display:none}}
+</style></head><body>
+<div id="g"></div><div id="storm"></div>
+<div class="pn" id="hud"></div><div class="pn" id="obj"></div><div class="pn" id="toast"></div>
+<div class="pn" id="bar"></div>
+<div id="tc"><button id="jb" aria-label="Jump">⤒</button><button id="eb" aria-label="Use or collect">✋</button></div>
+<div id="ov"><div><h1>🚀 ARES-1: Mars Open World</h1>
+<p>You landed on Mars. Explore, mine <b>metal ⛏️</b> and <b>ice ❄️</b>, then build a base that keeps you alive. Check your <b>air, food and power</b>. Solar flares from NASA’s real archive will hit, so stay close to a shelter!</p>
+<p><b>Move</b> WASD or arrows · <b>Look</b> drag the mouse · <b>Run</b> Shift (uses more air) · <b>Jump</b> Space · <b>Collect / read</b> E · <b>Build</b> keys 1–4 or the buttons. On a phone: left thumb moves, right thumb looks.</p>
+<ul><li>Glowing pillars are discovery sites with real NASA facts (+3 metal).</li><li>Solar panels stop at night. MOXIE needs power to make air. Greenhouses need power to grow food. <b>Nothing is free!</b></li></ul>
+<p class="hint" style="opacity:.7;font-size:12px">Data: DONKI flare events (archive), RAD/RadLab radiation, MOXIE, Mars Trek (Jezero), CSA food research, OSDR. Honest note: this page can’t reach NASA’s live servers, so data is curated and simplified, not live. Check the numbers before you cite them.</p>
+<button class="go" id="go">Land on Mars 🔴</button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),cl=(v,a=0,b=100)=>Math.max(a,Math.min(b,v)),R=Math.random;
+const cr=[];while(cr.length<16){const x=(R()-.5)*440,z=(R()-.5)*440;if(Math.hypot(x,z)>55)cr.push({x,z,r:12+R()*26,d:3+R()*6})}
+function H(x,z){let y=Math.sin(x*.02)*Math.cos(z*.017)*6+Math.sin(x*.05+z*.03)*2.2+Math.sin(z*.11)*Math.cos(x*.09)*.7;
+for(const c of cr){const d=Math.hypot(x-c.x,z-c.z)/c.r;y-=c.d*Math.exp(-d*d*2.2);y+=c.d*.35*Math.exp(-(d-1.05)*(d-1.05)*14)}
+return y*cl((Math.hypot(x,z)-18)/25,0,1)}
+const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(60,1,.1,600),rd=new THREE.WebGLRenderer({antialias:true});
+rd.setPixelRatio(Math.min(devicePixelRatio,1.5));$("#g").appendChild(rd.domElement);
+const dayC=new THREE.Color(0xe3a27c),nightC=new THREE.Color(0x160d28);sc.background=dayC.clone();sc.fog=new THREE.Fog(0xe3a27c,40,230);
+const hemi=new THREE.HemisphereLight(0xffd2b0,0x663322,.5),sunL=new THREE.DirectionalLight(0xfff0dd,1);sc.add(hemi,sunL);
+const cv=document.createElement("canvas");cv.width=cv.height=128;const cx=cv.getContext("2d");
+for(let i=0;i<3000;i++){const v=170+R()*85|0;cx.fillStyle=`rgb(${v},${v-8},${v-14})`;cx.fillRect(R()*128,R()*128,2,2)}
+const tex=new THREE.CanvasTexture(cv);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(70,70);
+const geo=new THREE.PlaneGeometry(500,500,110,110);geo.rotateX(-Math.PI/2);const pa=geo.attributes.position,col=new Float32Array(pa.count*3);
+for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i),y=H(x,z),n=.5+.5*Math.sin(x*.31)*Math.cos(z*.27),l=.75+.25*n+cl(y*.04,-.3,.25);pa.setY(i,y);col.set([.8*l,.38*l,.22*l],i*3)}
+geo.setAttribute("color",new THREE.BufferAttribute(col,3));geo.computeVertexNormals();
+sc.add(new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,map:tex})));
+const sp=new Float32Array(1200);for(let i=0;i<400;i++){const a=R()*6.28,b=R()*1.4+.1,r=400;sp.set([r*Math.cos(a)*Math.cos(b),r*Math.sin(b),r*Math.sin(a)*Math.cos(b)],i*3)}
+const sg=new THREE.BufferGeometry();sg.setAttribute("position",new THREE.BufferAttribute(sp,3));const stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:1.6,fog:false,transparent:true,opacity:0}));sc.add(stars);
+const mt=(c,e)=>new THREE.MeshLambertMaterial({color:c,emissive:e||0}),M=(g,m,x,y,z)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);return o};
+const P=new THREE.Group();P.add(M(new THREE.CylinderGeometry(.45,.5,1.1,10),mt(0xf4f4f4),0,.85,0),M(new THREE.SphereGeometry(.42,12,10),mt(0xf4f4f4),0,1.7,0),M(new THREE.SphereGeometry(.3,10,8),mt(0xffb300,0x553300),0,1.72,.25),M(new THREE.BoxGeometry(.6,.8,.35),mt(0x888888),0,1,-.4));
+P.children[2].scale.set(1,.8,.6);sc.add(P);P.position.set(0,0,9);
+function mk(t){const g=new THREE.Group();
+if(t==="solar"){g.add(M(new THREE.CylinderGeometry(.1,.1,1.2,6),mt(0x999999),0,.6,0));const p=M(new THREE.BoxGeometry(3,.1,2),mt(0x1b3a8a,0x0a1a40),0,1.4,0);p.rotation.x=-.5;g.add(p)}
+if(t==="moxie"){g.add(M(new THREE.BoxGeometry(2,1.4,1.6),mt(0xcfd2d6),0,.7,0),M(new THREE.CylinderGeometry(.25,.25,1.2,8),mt(0xff8a3d),.6,2,0))}
+if(t==="farm"){g.add(M(new THREE.CylinderGeometry(2.6,2.6,.3,16),mt(0xffffff),0,.15,0));const d=M(new THREE.SphereGeometry(2.4,16,10,0,6.283,0,1.571),new THREE.MeshLambertMaterial({color:0x58d68d,emissive:0x145a32,transparent:true,opacity:.7}),0,.3,0);g.add(d)}
+if(t==="shelter"){g.add(M(new THREE.SphereGeometry(4,20,12,0,6.283,0,1.571),mt(0xeeeeee),0,0,0),M(new THREE.BoxGeometry(1.4,2,.6),mt(0x333344),0,1,3.8))}
+return g}
+const B={solar:{n:"☀️ Solar",c:{m:2},tip:"Solar panels only work in daylight. A Mars day (a sol) is about 24 hours 39 minutes, so you need batteries for night."},moxie:{n:"🧪 MOXIE",c:{m:3,i:1},tip:"Perseverance’s MOXIE really made oxygen from Mars’s carbon-dioxide air. It needs power to run!"},farm:{n:"🌱 Greenhouse",c:{m:2,i:2},tip:"Growing food on site means less must be shipped from Earth. CSA and NASA study space farming. Plants need power for light and heat."},shelter:{n:"🏠 Shelter",c:{m:5},tip:"Mars’s thin air gives little protection from radiation. A shelter is your safe spot in a solar storm and refills your air and food."}};
+const bl=[],cnt={solar:0,moxie:0,farm:0,shelter:0};
+function put(t,x,z,free){const o=mk(t);o.position.set(x,H(x,z),z);sc.add(o);bl.push({t,x,z});cnt[t]++}
+put("shelter",0,0);
+const nodes=[],LM=[["Jezero delta",60,-80,"Jezero Crater was a lake billions of years ago. Mars Trek maps its terrain, and Perseverance explores its river delta."],["Curiosity’s radiation meter",-110,40,"Curiosity’s RAD measured about 0.6–0.7 mSv per day on Mars’s surface, roughly like the space station and far above Earth’s 0.01."],["Buried ice",140,110,"Spacecraft orbiting Mars found big deposits of water ice under the dust. Future crews could melt it for water."],["Dust storm site",-60,-150,"A giant dust storm in 2018 blocked sunlight from the Opportunity rover’s solar panels and ended its mission. Panels and dust don’t mix!"]],lm=[];
+const rk=new THREE.DodecahedronGeometry(.8);for(let i=0;i<70;i++){const x=(R()-.5)*420,z=(R()-.5)*420;if(Math.hypot(x,z)<14)continue;const ice=i%2,o=M(rk,mt(ice?0xbfe9ff:0x6b3a20,ice?0x2a5a7a:0),x,H(x,z)+.5,z);o.scale.set(1,ice?.6:1,1);sc.add(o);nodes.push({o,ice})}
+LM.forEach(l=>{const o=new THREE.Group();o.add(M(new THREE.CylinderGeometry(.6,.6,14,8),new THREE.MeshBasicMaterial({color:0x3fe0cb,transparent:true,opacity:.55}),0,7,0));o.position.set(l[1],H(l[1],l[2]),l[2]);sc.add(o);lm.push({o,l,done:false})});
+let S={air:100,hp:100,food:100,pw:30,bo:60,bf:40,m:6,i:2,sol:1,dt:.25},st={ph:"none",t:25,ev:null},yaw=0,pitch=.5,vy=0,gr=true,go=false,face=[0,1],won=false,tt=0,ti=0;
+const K={},joy={x:0,y:0},EV=[["X9.3 flare","6 Sep 2017",5],["X8.2 flare","10 Sep 2017",5],["X5.8 flare","11 May 2024",4],["X8.7 flare","14 May 2024",5],["X9.0 flare","3 Oct 2024",6],["M-class flare","a typical medium flare",2]];
+function toast(t,ms=4200){const e=$("#toast");e.innerHTML=t;e.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>e.style.opacity=0,ms)}
+$("#hud").innerHTML=[["a","🫧 Suit air","air"],["h","❤️ Health","hp"],["f","🍽️ Food","food"],["p","⚡ Base power","pow"],["o","🏠 Base air","air"],["g","🌱 Base food","food"]].map(a=>`<div class="b"><span>${a[1]}</span><i><u id="b${a[0]}" style="background:var(--${a[2]})"></u></i></div>`).join("")+`<div id="inv"></div>`;
+$("#bar").innerHTML=Object.keys(B).map((k,i)=>`<button data-b="${k}">${i+1}. ${B[k].n}<br>${Object.entries(B[k].c).map(e=>e[1]+(e[0]==="m"?"⛏️":"❄️")).join(" ")}</button>`).join("");
+function build(k){const b=B[k];if(S.m<(b.c.m||0)||S.i<(b.c.i||0)){toast("Not enough materials. Find more ⛏️ metal and ❄️ ice!");return}
+const x=P.position.x+face[0]*6,z=P.position.z+face[1]*6;if(bl.some(o=>Math.hypot(o.x-x,o.z-z)<7)){toast("Too close to another building. Move away a little.");return}
+S.m-=b.c.m||0;S.i-=b.c.i||0;const first=!cnt[k]||(k==="shelter"&&cnt[k]===1);put(k,x,z);toast(first?`✅ Built! ${b.tip}`:"✅ Built!",first?7000:2500)}
+$("#bar").onclick=e=>{const b=e.target.closest("[data-b]");if(b)build(b.dataset.b)};
+function act(){let bd=5,bn=null,bt=0;nodes.forEach(n=>{const d=P.position.distanceTo(n.o.position);if(d<bd){bd=d;bn=n;bt=1}});lm.forEach(l=>{if(!l.done){const d=Math.hypot(P.position.x-l.o.position.x,P.position.z-l.o.position.z);if(d<bd+2){bd=d;bn=l;bt=2}}});
+if(!bn){toast("Nothing to use here. Walk to a rock or a glowing pillar.",2000);return}
+if(bt===1){sc.remove(bn.o);nodes.splice(nodes.indexOf(bn),1);const n=1+(R()<.3?1:0);if(bn.ice){S.i+=n;toast(`❄️ +${n} ice`,1500)}else{S.m+=n;toast(`⛏️ +${n} metal`,1500)}}
+else{bn.done=true;bn.o.children[0].material.opacity=.12;S.m+=3;toast(`🔭 <b>${bn.l[0]}</b><br>${bn.l[3]}<br>+3 ⛏️`,9000)}}
+addEventListener("keydown",e=>{K[e.key.toLowerCase()]=1;const k=e.key.toLowerCase();if(k==="e")act();if(k===" "&&gr&&go){vy=6.5;gr=false}const n=+e.key;if(n>=1&&n<=4)build(Object.keys(B)[n-1])});addEventListener("keyup",e=>K[e.key.toLowerCase()]=0);
+$("#eb").onclick=act;$("#jb").onclick=()=>{if(gr){vy=6.5;gr=false}};
+const pt={};cv.remove;rd.domElement.addEventListener("pointerdown",e=>{const m=e.pointerType==="touch"&&e.clientX<innerWidth/2?"j":"l";pt[e.pointerId]={x:e.clientX,y:e.clientY,ox:e.clientX,oy:e.clientY,m};rd.domElement.setPointerCapture(e.pointerId)});
+rd.domElement.addEventListener("pointermove",e=>{const p=pt[e.pointerId];if(!p)return;if(p.m==="l"){yaw-=(e.clientX-p.x)*.006;pitch=cl(pitch+(e.clientY-p.y)*.006,.1,1.2);p.x=e.clientX;p.y=e.clientY}else{joy.x=cl((e.clientX-p.ox)/45,-1,1);joy.y=cl((e.clientY-p.oy)/45,-1,1)}});
+const up=e=>{const p=pt[e.pointerId];if(p&&p.m==="j"){joy.x=joy.y=0}delete pt[e.pointerId]};rd.domElement.addEventListener("pointerup",up);rd.domElement.addEventListener("pointercancel",up);
+function size(){rd.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}addEventListener("resize",size);size();
+$("#go").onclick=()=>{$("#ov").style.display="none";go=true;toast("Welcome to Mars! Find ⛏️ rocks and ❄️ ice, then build. Your first shelter is the lander.",7000)};
+function tick(dt){
+S.dt+=dt/180;if(S.dt>=1){S.dt-=1;S.sol++;toast(`🌅 Sol ${S.sol} begins`,2500)}
+const sun=Math.sin(S.dt*6.283),near=bl.some(b=>b.t==="shelter"&&Math.hypot(b.x-P.position.x,b.z-P.position.z)<7);
+if(st.ph!=="act")S.pw=cl(S.pw+cnt.solar*2*Math.max(0,sun)*dt);
+if(cnt.moxie){const u=cnt.moxie*dt;if(S.pw>=u&&S.bo<200){S.pw-=u;S.bo=cl(S.bo+cnt.moxie*1.4*dt,0,200)}}
+if(cnt.farm){const u=cnt.farm*.6*dt;if(S.pw>=u&&S.bf<100){S.pw-=u;S.bf=cl(S.bf+cnt.farm*.6*dt)}}
+let ix=(K.d||K.arrowright?1:0)-(K.a||K.arrowleft?1:0)+joy.x,iy=(K.s||K.arrowdown?1:0)-(K.w||K.arrowup?1:0)+joy.y,mag=Math.hypot(ix,iy);
+const run=K.shift&&mag>.1,sp=run?10:5.5;
+if(mag>.1){ix/=Math.max(1,mag);iy/=Math.max(1,mag);const dx=Math.cos(yaw)*ix+Math.sin(yaw)*iy,dz=-Math.sin(yaw)*ix+Math.cos(yaw)*iy;
+P.position.x=cl(P.position.x+dx*sp*dt,-240,240);P.position.z=cl(P.position.z+dz*sp*dt,-240,240);face=[dx/ Math.hypot(dx,dz),dz/Math.hypot(dx,dz)];P.rotation.y=Math.atan2(dx,dz)}
+const g=H(P.position.x,P.position.z);vy-=11*dt;P.position.y+=vy*dt;if(P.position.y<=g){P.position.y=g;vy=0;gr=true}
+if(near){const f=Math.min(S.bo,100-S.air,14*dt);S.air+=f;S.bo-=f;const e=Math.min(S.bf,100-S.food,6*dt);S.food+=e;S.bf-=e}else S.air=cl(S.air-(run?.9:.35)*dt);
+S.food=cl(S.food-.12*dt);
+st.t-=dt;if(st.ph==="none"&&st.t<=0){st.ph="warn";st.t=9;st.ev=EV[Math.floor(R()*EV.length)];toast(`📡 Earth’s space-weather team warns: <b>${st.ev[0]}</b> (${st.ev[1]}, from NASA’s DONKI archive). Get inside a shelter!`,9000)}
+else if(st.ph==="warn"&&st.t<=0){st.ph="act";st.t=12;$("#storm").style.opacity=.35}
+else if(st.ph==="act"&&st.t<=0){st.ph="none";st.t=60+R()*40;$("#storm").style.opacity=0;toast("☀️ The storm has passed.",2500)}
+if(st.ph==="act"&&!near)S.hp-=.7*st.ev[2]*dt;
+if(S.air<=0||S.food<=0)S.hp-=4*dt;else if(S.hp<100&&!(st.ph==="act"&&!near))S.hp=cl(S.hp+1.5*dt);
+if(S.hp<=0){S.hp=50;S.air=60;S.food=Math.max(S.food,40);S.m>>=1;P.position.set(0,0,9);toast("🚙 A rescue rover brought you home. You lost half your metal.",6000)}
+const dl=cl(sun*1.4+.25,0,1);sc.background.lerpColors(nightC,dayC,dl);sc.fog.color.copy(sc.background);sunL.intensity=.15+.95*dl;hemi.intensity=.2+.4*dl;sunL.position.set(Math.cos(S.dt*6.283)*80,Math.max(15,sun*90),40);stars.material.opacity=1-dl;
+ti-=dt;if(ti<=0){ti=.25;hud(sun)}}
+const OB=[[()=>cnt.solar>=2,"☀️ Build 2 solar panels"],[()=>cnt.moxie>=1,"🧪 Build a MOXIE"],[()=>cnt.farm>=1,"🌱 Build a greenhouse"],[()=>cnt.shelter>=2,"🏠 Build a 2nd shelter"],[()=>S.sol>=4,"🌅 Survive 3 sols"]];
+function hud(sun){const w=(i,v,m=100)=>$("#b"+i).style.width=cl(v/m*100)+"%";w("a",S.air);w("h",S.hp);w("f",S.food);w("p",S.pw);w("o",S.bo,200);w("g",S.bf);
+const hr=Math.floor((S.dt-.25)*24+36)%24;$("#inv").innerHTML=`⛏️ ${S.m} · ❄️ ${S.i}<br>Sol ${S.sol} · ${String(hr).padStart(2,"0")}:00 ${sun>0?"☀️":"🌙"}`;
+$("#obj").innerHTML=OB.map(o=>(o[0]()?"✅ ":"⬜ ")+o[1]).join("<br>")+`<br>🔭 Discoveries ${lm.filter(l=>l.done).length}/4`;
+if(!won&&OB.every(o=>o[0]())){won=true;toast("🎉 <b>Colony established!</b> You built a base that makes air, food and power. Keep exploring!",12000)}}
+const clock=new THREE.Clock();(function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(go)tick(dt);
+const t=new THREE.Vector3(P.position.x,P.position.y+1.6,P.position.z);cam.position.set(t.x+Math.sin(yaw)*Math.cos(pitch)*8,t.y+Math.sin(pitch)*8,t.z+Math.cos(yaw)*Math.cos(pitch)*8);
+cam.position.y=Math.max(cam.position.y,H(cam.position.x,cam.position.z)+1);cam.lookAt(t);rd.render(sc,cam)})();
+hud(1);
+</script></body></html>
